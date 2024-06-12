@@ -234,12 +234,12 @@ server <- function(input, output) {
   })
   
   # Filter and rank by Pitching Speed
-  output$pitchingMaxVelTable <- renderTable({
+  output$pitchingMaxVelTable <- render_gt({
     grouped_pitchingData <- pitchingData %>%
       filter(!is.na(RelSpeed)) %>%
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year) %>%
-      summarize(`Release Speed (mph)` = max(RelSpeed, na.rm = TRUE), .groups = "drop") %>% 
+      summarize(`Release Speed (mph)` = round(max(RelSpeed, na.rm = TRUE), 1), .groups = "drop") %>% 
       ungroup()
     
     ranked_pitchingData <- grouped_pitchingData %>% 
@@ -252,10 +252,37 @@ server <- function(input, output) {
       mutate(`Rank Change` = lag(Rank, order_by = FakeDate) - Rank) %>%
       ungroup()
     
-    filtered_pitchingData <- ranked_pitchingData %>%
+    final_data <- ranked_pitchingData %>%
       filter(Month == input$pitching_month, Year == input$pitching_year, Level == input$pitching_level) %>%
       arrange(desc(`Release Speed (mph)`)) %>% 
       select(Rank, Name, `Release Speed (mph)`, `Rank Change`)
+    
+    final_data %>%
+      gt() %>%
+      cols_align(
+        align = "center",
+        columns = everything()
+      ) %>% 
+      tab_style(
+        style = cell_text(size = px(18), weight = "bold"),
+        locations = cells_stub()
+      ) %>%
+      gt_fa_rank_change(
+        `Rank Change`, palette = c("green", "lightgrey", "red"), font_color = "match"
+      ) %>%
+      cols_width(
+        Name ~ px(250),
+        `Release Speed (mph)` ~ px(200)
+      ) %>%
+      cols_label(`Rank Change` = "") %>% 
+      tab_options(
+        table.background.color = "#FFFFFF00",
+        table.font.color = "white",
+        table.align = "left"
+      ) %>% 
+      tab_options(
+        table.border.top.style = "hidden"
+      )
   })
   
   # Filter and rank by ISO Belt Squat
