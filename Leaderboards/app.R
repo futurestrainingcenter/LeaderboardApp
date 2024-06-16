@@ -1020,7 +1020,6 @@ server <- function(input, output) {
         file_pattern = "blank.png"
       )
   })
-  
 }
 
 # Run the application 
