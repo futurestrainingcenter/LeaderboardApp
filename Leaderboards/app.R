@@ -637,7 +637,7 @@ server <- function(input, output) {
       filter(`Exercise Name` == "Proteus Full Test") %>% 
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`Acceleration (m/s²)` = max(`acceleration - high`, na.rm = TRUE), .groups = 'drop') %>% 
+      summarize(`Acceleration (m/s²)` = round(max(`acceleration - high`, na.rm = TRUE), 2), .groups = 'drop') %>% 
       ungroup()
     
     ranked_ProteusAcc <- grouped_ProteusAcc %>% 
