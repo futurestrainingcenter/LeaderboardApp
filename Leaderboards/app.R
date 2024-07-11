@@ -121,7 +121,9 @@ server <- function(input, output) {
       arrange(desc(`Exit Velocity (mph)`)) %>%
       select(Rank, Name, `Exit Velocity (mph)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -155,24 +157,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by Max Distance
@@ -193,7 +209,9 @@ server <- function(input, output) {
       arrange(desc(`Distance (ft)`)) %>%
       select(Rank, Name, `Distance (ft)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -227,24 +245,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by Bat Speed
@@ -265,7 +297,9 @@ server <- function(input, output) {
       arrange(desc(`Bat Speed (mph)`)) %>%
       select(Rank, Name, `Bat Speed (mph)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -299,24 +333,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by Pitching Speed
@@ -343,7 +391,9 @@ server <- function(input, output) {
       arrange(desc(`Release Speed (mph)`)) %>% 
       select(Rank, Name, `Release Speed (mph)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -355,7 +405,7 @@ server <- function(input, output) {
         locations = cells_stub()
       ) %>%
       tab_style(
-        style = cell_borders(sides = c("top"),  weight = px(1)),
+        style = cell_borders(sides = c("top"), weight = px(1)),
         locations = cells_body(rows = 1)
       ) %>% 
       gt_fa_rank_change(
@@ -377,24 +427,39 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
+    
   })
   
   # Filter and rank by ISO Belt Squat
@@ -421,7 +486,9 @@ server <- function(input, output) {
       arrange(desc(`Peak Vertical Force (N)`)) %>% 
       select(Rank, Name, `Peak Vertical Force (N)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -455,24 +522,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by Squat Jump
@@ -499,7 +580,9 @@ server <- function(input, output) {
       arrange(desc(`Takeoff Peak Force (N)`)) %>% 
       select(Rank, Name, `Takeoff Peak Force (N)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -533,24 +616,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by Proteus Power
@@ -577,7 +674,9 @@ server <- function(input, output) {
         arrange(desc(`Power (W)`)) %>% 
         select(Rank, Name, `Power (W)`, `Rank Change`)
       
-      final_data %>%
+      row_count <- nrow(final_data)
+      
+      table <- final_data %>%
         gt() %>%
         cols_add(`  ` = 1, .after = Rank) %>% 
         cols_align(
@@ -611,24 +710,38 @@ server <- function(input, output) {
           row.striping.background_color = "grey20",
         ) %>%
         fmt_image(
-          columns = Rank,
-          rows = 1,
-          file_pattern = "firstplace.png"
-        ) %>%
-        fmt_image(
-          columns = Rank,
-          rows = 2,
-          file_pattern = "secondplace.png"
-        ) %>%
-        fmt_image(
-          columns = Rank,
-          rows = 3,
-          file_pattern = "thirdplace.png"
-        ) %>% 
-        fmt_image(
           columns = `  `,
           file_pattern = "blank.png"
         )
+      
+      if (row_count >= 1) {
+        table <- table %>%
+          fmt_image(
+            columns = Rank,
+            rows = 1,
+            file_pattern = "firstplace.png"
+          )
+      }
+      
+      if (row_count >= 2) {
+        table <- table %>%
+          fmt_image(
+            columns = Rank,
+            rows = 2,
+            file_pattern = "secondplace.png"
+          )
+      }
+      
+      if (row_count >= 3) {
+        table <- table %>%
+          fmt_image(
+            columns = Rank,
+            rows = 3,
+            file_pattern = "thirdplace.png"
+          )
+      }
+      
+      table
   })
   
   # Filter and rank by Proteus Acceleration
@@ -655,7 +768,9 @@ server <- function(input, output) {
       arrange(desc(`Acceleration (m/s²)`)) %>% 
       select(Rank, Name, `Acceleration (m/s²)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -689,24 +804,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by Max Running Speed
@@ -733,7 +862,9 @@ server <- function(input, output) {
       arrange(desc(`Top Speed (mph)`)) %>% 
       select(Rank, Name, `Top Speed (mph)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -767,24 +898,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by 10 Yard Acceleration
@@ -811,7 +956,9 @@ server <- function(input, output) {
       arrange(`10 Yard Acceleration (sec)`) %>% 
       select(Rank, Name, `10 Yard Acceleration (sec)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -845,24 +992,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by 30 Yard Sprint
@@ -889,7 +1050,9 @@ server <- function(input, output) {
       arrange(`30 Yard Sprint (sec)`) %>% 
       select(Rank, Name, `30 Yard Sprint (sec)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -923,24 +1086,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
   
   # Filter and rank by RSI
@@ -967,7 +1144,9 @@ server <- function(input, output) {
       arrange(desc(`RSI (Jump Height/Contact Time)`)) %>% 
       select(Rank, Name, `RSI (Jump Height/Contact Time)`, `Rank Change`)
     
-    final_data %>%
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
       gt() %>%
       cols_add(`  ` = 1, .after = Rank) %>% 
       cols_align(
@@ -1001,24 +1180,38 @@ server <- function(input, output) {
         row.striping.background_color = "grey20",
       ) %>%
       fmt_image(
-        columns = Rank,
-        rows = 1,
-        file_pattern = "firstplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 2,
-        file_pattern = "secondplace.png"
-      ) %>%
-      fmt_image(
-        columns = Rank,
-        rows = 3,
-        file_pattern = "thirdplace.png"
-      ) %>% 
-      fmt_image(
         columns = `  `,
         file_pattern = "blank.png"
       )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
   })
 }
 
