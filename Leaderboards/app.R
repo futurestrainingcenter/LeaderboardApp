@@ -1123,7 +1123,7 @@ server <- function(input, output) {
   # Filter and rank by RSI
   output$speedRSITable <- render_gt({
     grouped_RSI <- speedData %>%
-      filter(`Exercise Name` == "Reactive Strength Index") %>% 
+      filter(`Exercise Name` == "RSI") %>% 
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
       summarize(`RSI (Jump Height/Contact Time)` = max(`Mean RSI (Jump Height/Contact Time) [m/s]`), .groups = 'drop') %>% 
