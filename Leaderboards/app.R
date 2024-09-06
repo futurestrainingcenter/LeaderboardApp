@@ -29,7 +29,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                             sidebarPanel(
                               selectInput("month", "Select Month:", choices = month.name, selected = most_recent_month),
                               selectInput("year", "Select Year:", choices = unique(hittingData$Year), selected = most_recent_year),
-                              selectInput("level", "Select Level:", choices = unique(hittingData$Level)),
+                              selectInput("level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")),                              
                               radioButtons("sport", "Select Sport:", choices = unique(hittingData$Sport))
                             ),
                             
@@ -48,7 +48,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                             sidebarPanel(
                               selectInput("pitching_month", "Select Month:", choices = month.name, selected = most_recent_month),
                               selectInput("pitching_year", "Select Year:", choices = unique(pitchingData$Year), selected = most_recent_year),
-                              selectInput("pitching_level", "Select Level:", choices = unique(pitchingData$Level))
+                              selectInput("pitching_level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")), 
                             ),
                             
                             mainPanel(
@@ -64,7 +64,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                             sidebarPanel(
                               selectInput("strength_month", "Select Month:", choices = month.name, selected = most_recent_month),
                               selectInput("strength_year", "Select Year:", choices = unique(strengthData$Year), selected = most_recent_year),
-                              selectInput("strength_level", "Select Level:", choices = unique(strengthData$Level)),
+                              selectInput("strength_level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")), 
                               radioButtons("gender", "Select Gender:", choices = unique(strengthData$Gender))
                             ),
                             
@@ -84,7 +84,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                             sidebarPanel(
                               selectInput("speed_month", "Select Month:", choices = month.name, selected = most_recent_month),
                               selectInput("speed_year", "Select Year:", choices = unique(speedData$Year), selected = most_recent_year),
-                              selectInput("speed_level", "Select Level:", choices = unique(speedData$Level)),
+                              selectInput("speed_level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")), 
                               radioButtons("speed_gender", "Select Gender:", choices = unique(speedData$Gender))
                             ),
                             
