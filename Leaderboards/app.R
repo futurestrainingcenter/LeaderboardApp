@@ -8,7 +8,7 @@ library(lubridate)
 
 # Load hitting data
 hittingData <- read_csv("HittingFacilityData.csv")
-hittingData$Date <- as.Date(hittingData$Date, format="%m/%d/%y")
+hittingData$FakeDate <- as.Date(hittingData$FakeDate, format="%m/%d/%y")
 # Load pitching data
 pitchingData <- read_csv("PitchingFacilityData.csv")
 pitchingData$Date <- as.Date(pitchingData$Date, format="%m/%d/%y")
@@ -21,7 +21,7 @@ speedData$Date <- as.Date(speedData$Date, format="%m/%d/%y")
 
 # Get the most recent month and year from the datasets
 #most_recent_date <- max(strengthData$Date, na.rm = TRUE)
-most_recent_month <- "September" #month.name[month(most_recent_date)]
+most_recent_month <- "October" #month.name[month(most_recent_date)]
 most_recent_year <- "2024" #year(most_recent_date)
 
 # Define UI for the application
@@ -34,7 +34,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                               selectInput("month", "Select Month:", choices = month.name, selected = most_recent_month),
                               selectInput("year", "Select Year:", choices = unique(hittingData$Year), selected = most_recent_year),
                               selectInput("level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")),                              
-                              radioButtons("gender", "Select Gender:", choices = unique(hittingData$Gender))
+                              radioButtons("sport", "Select Sport:", choices = c("Baseball", "Softball"))
                             ),
                             
                             mainPanel(
@@ -75,7 +75,6 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                             mainPanel(
                               tabsetPanel(
                                 tabPanel("ISO Belt Squat", tableOutput("strengthIsoBeltSquatTable")),
-                                tabPanel("Squat Jump", tableOutput("strengthSquatJumpTable")),
                                 tabPanel("Proteus Power", tableOutput("strengthProteusPowerTable")),
                                 tabPanel("Proteus Acceleration", tableOutput("strengthProteusAccelerationTable"))
                               )
@@ -97,7 +96,6 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                                 tabPanel("Top Speed", tableOutput("speedMaxVelTable")),
                                 tabPanel("10 Yard Acceleration", tableOutput("speed10YardAccelTable")),
                                 tabPanel("30 Yard Sprint", tableOutput("speed30YardSprintTable")),
-                                tabPanel("RSI", tableOutput("speedRSITable"))
                               )
                             )
                           )
@@ -109,11 +107,9 @@ server <- function(input, output) {
   
   output$maxVelTable <- render_gt({
     grouped_hittingData <- hittingData %>%
-      filter(!is.na(`Max Exit Velocity`), !is.na(`Avg Exit Velocity`), !is.na(`Max Distance to Impact`), !is.na(`Avg Distance to Impact`),
-             `Max Exit Velocity` != 0, `Avg Exit Velocity` != 0, `Max Distance to Impact` != 0, `Avg Distance to Impact` != 0) %>% 
-      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
-      group_by(Name, Level, FakeDate, Month, Year, Gender) %>%
-      summarize(`Exit Velocity (mph)` = round(max(`Max Exit Velocity`, na.rm = TRUE), 1), .groups = "drop") %>% 
+      filter(!is.na(MaxVel)) %>% 
+      group_by(Name, Level, FakeDate, Month, Year, Sport) %>%
+      summarize(`Exit Velocity (mph)` = max(MaxVel), .groups = "drop") %>% 
       ungroup()
     
     ranked_hittingData <- grouped_hittingData %>% 
@@ -127,7 +123,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_hittingData %>%
-      filter(Month == input$month, Year == input$year, Level == input$level, Gender == input$gender) %>%
+      filter(Month == input$month, Year == input$year, Level == input$level, Sport == input$sport) %>%
       arrange(desc(`Exit Velocity (mph)`)) %>%
       select(Rank, Name, `Exit Velocity (mph)`, `Rank Change`)
     
@@ -204,11 +200,9 @@ server <- function(input, output) {
   # Filter and rank by Max Distance
   output$maxDistTable <- render_gt({
     grouped_hittingData <- hittingData %>%
-      filter(!is.na(`Max Exit Velocity`), !is.na(`Avg Exit Velocity`), !is.na(`Max Distance to Impact`), !is.na(`Avg Distance to Impact`),
-             `Max Exit Velocity` != 0, `Avg Exit Velocity` != 0, `Max Distance to Impact` != 0, `Avg Distance to Impact` != 0) %>% 
-      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
-      group_by(Name, Level, FakeDate, Month, Year, Gender) %>%
-      summarize(`Distance (ft)` = round(max(`Max Distance to Impact`, na.rm = TRUE), 1), .groups = "drop") %>% 
+      filter(!is.na(MaxDist)) %>% 
+      group_by(Name, Level, FakeDate, Month, Year, Sport) %>%
+      summarize(`Distance (ft)` = max(MaxDist, na.rm = TRUE), .groups = "drop") %>% 
       ungroup()
     
     ranked_hittingData <- grouped_hittingData %>% 
@@ -222,7 +216,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_hittingData %>%
-      filter(Month == input$month, Year == input$year, Level == input$level, Gender == input$gender) %>%
+      filter(Month == input$month, Year == input$year, Level == input$level, Sport == input$sport) %>%
       arrange(desc(`Distance (ft)`)) %>%
       select(Rank, Name, `Distance (ft)`, `Rank Change`)
     
@@ -299,10 +293,9 @@ server <- function(input, output) {
   # Filter and rank by Bat Speed
   output$batSpeedTable <- render_gt({
     grouped_hittingData <- hittingData %>%
-      filter(!is.na(`Bat Speed`)) %>% 
-      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
-      group_by(Name, Level, FakeDate, Month, Year, Gender) %>%
-      summarize(`Bat Speed (mph)` = round(max(`Bat Speed`, na.rm = TRUE), 1), .groups = "drop") %>% 
+      filter(!is.na(`Bat Speed (mph)`)) %>% 
+      group_by(Name, Level, FakeDate, Month, Year, Sport) %>%
+      summarize(`Bat Speed (mph)` = max(`Bat Speed (mph)`, na.rm = TRUE), .groups = "drop") %>% 
       ungroup()
     
     ranked_hittingData <- grouped_hittingData %>% 
@@ -316,7 +309,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_hittingData %>%
-      filter(Month == input$month, Year == input$year, Level == input$level, Gender == input$gender) %>%
+      filter(Month == input$month, Year == input$year, Level == input$level, Sport == input$sport) %>%
       arrange(desc(`Bat Speed (mph)`)) %>%
       select(Rank, Name, `Bat Speed (mph)`, `Rank Change`)
     
@@ -532,100 +525,6 @@ server <- function(input, output) {
       cols_width(
         Name ~ px(250),
         `Peak Vertical Force (N)` ~ px(200)
-      ) %>%
-      cols_label(`Rank Change` = "") %>%
-      opt_row_striping(row_striping = TRUE) %>% 
-      tab_options(
-        table.background.color = "#FFFFFF00",
-        table.font.color = "white",
-        table.align = "left",
-        table.border.top.style = "hidden",
-        table.border.bottom.style = "hidden",
-        table_body.hlines.style = "hidden",
-        row.striping.background_color = "grey20",
-      ) %>%
-      fmt_image(
-        columns = `  `,
-        file_pattern = "blank.png"
-      )
-    
-    if (row_count >= 1) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 1,
-          file_pattern = "firstplace.png"
-        )
-    }
-    
-    if (row_count >= 2) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 2,
-          file_pattern = "secondplace.png"
-        )
-    }
-    
-    if (row_count >= 3) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 3,
-          file_pattern = "thirdplace.png"
-        )
-    }
-    
-    table
-  })
-  
-  # Filter and rank by Squat Jump
-  output$strengthSquatJumpTable <- render_gt({
-    grouped_SJ <- strengthData %>%
-      filter(`Exercise Type` == "ForceDeck: Squat Jump") %>% 
-      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
-      group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`Takeoff Peak Force (N)` = max(`Takeoff Peak Force [N]`, na.rm = TRUE), .groups = 'drop') %>% 
-      ungroup()
-    
-    ranked_ISOSQT <- grouped_SJ %>% 
-      group_by(FakeDate, Level) %>%
-      arrange(FakeDate, Level, desc(`Takeoff Peak Force (N)`)) %>%
-      mutate(Rank = row_number()) %>%
-      ungroup() %>%
-      arrange(Name, FakeDate) %>%
-      group_by(Name) %>%
-      mutate(`Rank Change` = lag(Rank, order_by = FakeDate) - Rank) %>%
-      ungroup()
-    
-    final_data <- ranked_ISOSQT %>%
-      filter(Month == input$strength_month, Year == input$strength_year, Level == input$strength_level, Gender == input$strenth_gender) %>%
-      arrange(desc(`Takeoff Peak Force (N)`)) %>% 
-      select(Rank, Name, `Takeoff Peak Force (N)`, `Rank Change`)
-    
-    row_count <- nrow(final_data)
-    
-    table <- final_data %>%
-      gt() %>%
-      cols_add(`  ` = 1, .after = Rank) %>% 
-      cols_align(
-        align = "center",
-        columns = everything()
-      ) %>%
-      tab_style(
-        style = cell_text(size = px(18), weight = "bold"),
-        locations = cells_stub()
-      ) %>%
-      tab_style(
-        style = cell_borders(sides = c("top"),  weight = px(1)),
-        locations = cells_body(rows = 1)
-      ) %>% 
-      gt_fa_rank_change(
-        `Rank Change`, palette = c("green", "lightgrey", "red"), font_color = "match"
-      ) %>%
-      cols_width(
-        Name ~ px(250),
-        `Takeoff Peak Force (N)` ~ px(200)
       ) %>%
       cols_label(`Rank Change` = "") %>%
       opt_row_striping(row_striping = TRUE) %>% 
@@ -1143,99 +1042,6 @@ server <- function(input, output) {
     table
   })
   
-  # Filter and rank by RSI
-  output$speedRSITable <- render_gt({
-    grouped_RSI <- speedData %>%
-      filter(`Exercise Name` == "RSI") %>% 
-      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
-      group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`RSI (Jump Height/Contact Time)` = max(`Mean RSI (Jump Height/Contact Time) [m/s]`), .groups = 'drop') %>% 
-      ungroup()
-    
-    ranked_RSI <- grouped_RSI %>% 
-      group_by(FakeDate, Level) %>%
-      arrange(FakeDate, Level, desc(`RSI (Jump Height/Contact Time)`)) %>%
-      mutate(Rank = row_number()) %>%
-      ungroup() %>%
-      arrange(Name, FakeDate) %>%
-      group_by(Name) %>%
-      mutate(`Rank Change` = lag(Rank, order_by = FakeDate) - Rank) %>%
-      ungroup()
-    
-    final_data <- ranked_RSI %>%
-      filter(Month == input$speed_month, Year == input$speed_year, Level == input$speed_level, Gender == input$speed_gender) %>%
-      arrange(desc(`RSI (Jump Height/Contact Time)`)) %>% 
-      select(Rank, Name, `RSI (Jump Height/Contact Time)`, `Rank Change`)
-    
-    row_count <- nrow(final_data)
-    
-    table <- final_data %>%
-      gt() %>%
-      cols_add(`  ` = 1, .after = Rank) %>% 
-      cols_align(
-        align = "center",
-        columns = everything()
-      ) %>%
-      tab_style(
-        style = cell_text(size = px(18), weight = "bold"),
-        locations = cells_stub()
-      ) %>%
-      tab_style(
-        style = cell_borders(sides = c("top"),  weight = px(1)),
-        locations = cells_body(rows = 1)
-      ) %>% 
-      gt_fa_rank_change(
-        `Rank Change`, palette = c("green", "lightgrey", "red"), font_color = "match"
-      ) %>%
-      cols_width(
-        Name ~ px(250),
-        `RSI (Jump Height/Contact Time)` ~ px(200)
-      ) %>%
-      cols_label(`Rank Change` = "") %>%
-      opt_row_striping(row_striping = TRUE) %>% 
-      tab_options(
-        table.background.color = "#FFFFFF00",
-        table.font.color = "white",
-        table.align = "left",
-        table.border.top.style = "hidden",
-        table.border.bottom.style = "hidden",
-        table_body.hlines.style = "hidden",
-        row.striping.background_color = "grey20",
-      ) %>%
-      fmt_image(
-        columns = `  `,
-        file_pattern = "blank.png"
-      )
-    
-    if (row_count >= 1) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 1,
-          file_pattern = "firstplace.png"
-        )
-    }
-    
-    if (row_count >= 2) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 2,
-          file_pattern = "secondplace.png"
-        )
-    }
-    
-    if (row_count >= 3) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 3,
-          file_pattern = "thirdplace.png"
-        )
-    }
-    
-    table
-  })
 }
 
 # Run the application 
