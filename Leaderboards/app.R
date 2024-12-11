@@ -21,7 +21,7 @@ speedData$Date <- as.Date(speedData$Date, format="%m/%d/%y")
 
 # Get the most recent month and year from the datasets
 #most_recent_date <- max(strengthData$Date, na.rm = TRUE)
-most_recent_month <- "October" #month.name[month(most_recent_date)]
+most_recent_month <- "November" #month.name[month(most_recent_date)]
 most_recent_year <- "2024" #year(most_recent_date)
 
 # Define UI for the application
