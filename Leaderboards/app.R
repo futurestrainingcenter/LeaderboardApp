@@ -21,7 +21,7 @@ speedData$Date <- as.Date(speedData$Date, format="%m/%d/%y")
 
 # Get the most recent month and year from the datasets
 #most_recent_date <- max(strengthData$Date, na.rm = TRUE)
-most_recent_month <- "November" #month.name[month(most_recent_date)]
+most_recent_month <- "December" #month.name[month(most_recent_date)]
 most_recent_year <- "2024" #year(most_recent_date)
 
 # Define UI for the application
@@ -75,8 +75,9 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                             mainPanel(
                               tabsetPanel(
                                 tabPanel("ISO Belt Squat", tableOutput("strengthIsoBeltSquatTable")),
-                                tabPanel("Proteus Power", tableOutput("strengthProteusPowerTable")),
-                                tabPanel("Proteus Acceleration", tableOutput("strengthProteusAccelerationTable"))
+                                tabPanel("Countermovement Jump", tableOutput("CMJ_Table")),
+                                tabPanel("Shoulder ISO-Y", tableOutput("SHLDISOY_Table")),
+                                tabPanel("Proteus Power", tableOutput("strengthProteusPowerTable"))
                               )
                             )
                           )
@@ -481,7 +482,7 @@ server <- function(input, output) {
   # Filter and rank by ISO Belt Squat
   output$strengthIsoBeltSquatTable <- render_gt({
     grouped_ISOSQT <- strengthData %>%
-      filter(`Exercise Type` == "ForceDeck: ISO Belt Squat") %>% 
+      filter(`Exercise Name` == "IBSQT") %>% 
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
       summarize(`Peak Vertical Force (N)` = max(`Peak Vertical Force [N]`, na.rm = TRUE), .groups = 'drop') %>% 
@@ -525,6 +526,194 @@ server <- function(input, output) {
       cols_width(
         Name ~ px(250),
         `Peak Vertical Force (N)` ~ px(200)
+      ) %>%
+      cols_label(`Rank Change` = "") %>%
+      opt_row_striping(row_striping = TRUE) %>% 
+      tab_options(
+        table.background.color = "#FFFFFF00",
+        table.font.color = "white",
+        table.align = "left",
+        table.border.top.style = "hidden",
+        table.border.bottom.style = "hidden",
+        table_body.hlines.style = "hidden",
+        row.striping.background_color = "grey20",
+      ) %>%
+      fmt_image(
+        columns = `  `,
+        file_pattern = "blank.png"
+      )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
+  })
+  
+  # Filter and rank by Countermovement Jump
+  output$CMJ_Table <- render_gt({
+    grouped_CMJ <- strengthData %>%
+      filter(`Exercise Name` == "CMJ") %>% 
+      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
+      group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
+      summarize(`Peak Power [W]` = max(`Peak Power [W]`, na.rm = TRUE), .groups = 'drop') %>% 
+      ungroup()
+    
+    ranked_CMJ <- grouped_CMJ %>% 
+      group_by(FakeDate, Level) %>%
+      arrange(FakeDate, Level, desc(`Peak Power [W]`)) %>%
+      mutate(Rank = row_number()) %>%
+      ungroup() %>%
+      arrange(Name, FakeDate) %>%
+      group_by(Name) %>%
+      mutate(`Rank Change` = lag(Rank, order_by = FakeDate) - Rank) %>%
+      ungroup()
+    
+    final_data <- ranked_CMJ %>%
+      filter(Month == input$strength_month, Year == input$strength_year, Level == input$strength_level, Gender == input$strenth_gender) %>%
+      arrange(desc(`Peak Power [W]`)) %>% 
+      select(Rank, Name, `Peak Power [W]`, `Rank Change`)
+    
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
+      gt() %>%
+      cols_add(`  ` = 1, .after = Rank) %>% 
+      cols_align(
+        align = "center",
+        columns = everything()
+      ) %>%
+      tab_style(
+        style = cell_text(size = px(18), weight = "bold"),
+        locations = cells_stub()
+      ) %>%
+      tab_style(
+        style = cell_borders(sides = c("top"),  weight = px(1)),
+        locations = cells_body(rows = 1)
+      ) %>% 
+      gt_fa_rank_change(
+        `Rank Change`, palette = c("green", "lightgrey", "red"), font_color = "match"
+      ) %>%
+      cols_width(
+        Name ~ px(250),
+        `Peak Power [W]` ~ px(200)
+      ) %>%
+      cols_label(`Rank Change` = "") %>%
+      opt_row_striping(row_striping = TRUE) %>% 
+      tab_options(
+        table.background.color = "#FFFFFF00",
+        table.font.color = "white",
+        table.align = "left",
+        table.border.top.style = "hidden",
+        table.border.bottom.style = "hidden",
+        table_body.hlines.style = "hidden",
+        row.striping.background_color = "grey20",
+      ) %>%
+      fmt_image(
+        columns = `  `,
+        file_pattern = "blank.png"
+      )
+    
+    if (row_count >= 1) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 1,
+          file_pattern = "firstplace.png"
+        )
+    }
+    
+    if (row_count >= 2) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 2,
+          file_pattern = "secondplace.png"
+        )
+    }
+    
+    if (row_count >= 3) {
+      table <- table %>%
+        fmt_image(
+          columns = Rank,
+          rows = 3,
+          file_pattern = "thirdplace.png"
+        )
+    }
+    
+    table
+  })
+  
+  # Filter and rank by Shoulder ISO-Y
+  output$SHLDISOY_Table <- render_gt({
+    grouped_SHLDISOY <- strengthData %>%
+      filter(`Exercise Name` == "SHLDISOY") %>% 
+      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
+      group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
+      summarize(`Peak Vertical Force [N]` = max(`Peak Vertical Force [N]`, na.rm = TRUE), .groups = 'drop') %>% 
+      ungroup()
+    
+    ranked_SHLDISOY <- grouped_SHLDISOY %>% 
+      group_by(FakeDate, Level) %>%
+      arrange(FakeDate, Level, desc(`Peak Vertical Force [N]`)) %>%
+      mutate(Rank = row_number()) %>%
+      ungroup() %>%
+      arrange(Name, FakeDate) %>%
+      group_by(Name) %>%
+      mutate(`Rank Change` = lag(Rank, order_by = FakeDate) - Rank) %>%
+      ungroup()
+    
+    final_data <- ranked_SHLDISOY %>%
+      filter(Month == input$strength_month, Year == input$strength_year, Level == input$strength_level, Gender == input$strenth_gender) %>%
+      arrange(desc(`Peak Vertical Force [N]`)) %>% 
+      select(Rank, Name, `Peak Vertical Force [N]`, `Rank Change`)
+    
+    row_count <- nrow(final_data)
+    
+    table <- final_data %>%
+      gt() %>%
+      cols_add(`  ` = 1, .after = Rank) %>% 
+      cols_align(
+        align = "center",
+        columns = everything()
+      ) %>%
+      tab_style(
+        style = cell_text(size = px(18), weight = "bold"),
+        locations = cells_stub()
+      ) %>%
+      tab_style(
+        style = cell_borders(sides = c("top"),  weight = px(1)),
+        locations = cells_body(rows = 1)
+      ) %>% 
+      gt_fa_rank_change(
+        `Rank Change`, palette = c("green", "lightgrey", "red"), font_color = "match"
+      ) %>%
+      cols_width(
+        Name ~ px(250),
+        `Peak Vertical Force [N]` ~ px(200)
       ) %>%
       cols_label(`Rank Change` = "") %>%
       opt_row_striping(row_striping = TRUE) %>% 
@@ -666,107 +855,13 @@ server <- function(input, output) {
       table
   })
   
-  # Filter and rank by Proteus Acceleration
-  output$strengthProteusAccelerationTable <- render_gt({
-    grouped_ProteusAcc <- strengthData %>%
-      filter(`Exercise Name` == "Proteus Full Test") %>% 
-      mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
-      group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`Acceleration (m/s²)` = round(max(`acceleration - high`, na.rm = TRUE), 2), .groups = 'drop') %>% 
-      ungroup()
-    
-    ranked_ProteusAcc <- grouped_ProteusAcc %>% 
-      group_by(FakeDate, Level) %>%
-      arrange(FakeDate, Level, desc(`Acceleration (m/s²)`)) %>%
-      mutate(Rank = row_number()) %>%
-      ungroup() %>%
-      arrange(Name, FakeDate) %>%
-      group_by(Name) %>%
-      mutate(`Rank Change` = lag(Rank, order_by = FakeDate) - Rank) %>%
-      ungroup()
-    
-    final_data <- ranked_ProteusAcc %>%
-      filter(Month == input$strength_month, Year == input$strength_year, Level == input$strength_level, Gender == input$strenth_gender) %>%
-      arrange(desc(`Acceleration (m/s²)`)) %>% 
-      select(Rank, Name, `Acceleration (m/s²)`, `Rank Change`)
-    
-    row_count <- nrow(final_data)
-    
-    table <- final_data %>%
-      gt() %>%
-      cols_add(`  ` = 1, .after = Rank) %>% 
-      cols_align(
-        align = "center",
-        columns = everything()
-      ) %>%
-      tab_style(
-        style = cell_text(size = px(18), weight = "bold"),
-        locations = cells_stub()
-      ) %>%
-      tab_style(
-        style = cell_borders(sides = c("top"),  weight = px(1)),
-        locations = cells_body(rows = 1)
-      ) %>% 
-      gt_fa_rank_change(
-        `Rank Change`, palette = c("green", "lightgrey", "red"), font_color = "match"
-      ) %>%
-      cols_width(
-        Name ~ px(250),
-        `Acceleration (m/s²)` ~ px(200)
-      ) %>%
-      cols_label(`Rank Change` = "") %>%
-      opt_row_striping(row_striping = TRUE) %>% 
-      tab_options(
-        table.background.color = "#FFFFFF00",
-        table.font.color = "white",
-        table.align = "left",
-        table.border.top.style = "hidden",
-        table.border.bottom.style = "hidden",
-        table_body.hlines.style = "hidden",
-        row.striping.background_color = "grey20",
-      ) %>%
-      fmt_image(
-        columns = `  `,
-        file_pattern = "blank.png"
-      )
-    
-    if (row_count >= 1) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 1,
-          file_pattern = "firstplace.png"
-        )
-    }
-    
-    if (row_count >= 2) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 2,
-          file_pattern = "secondplace.png"
-        )
-    }
-    
-    if (row_count >= 3) {
-      table <- table %>%
-        fmt_image(
-          columns = Rank,
-          rows = 3,
-          file_pattern = "thirdplace.png"
-        )
-    }
-    
-    table
-  })
-  
   # Filter and rank by Max Running Speed
   output$speedMaxVelTable <- render_gt({
     grouped_MaxSpeed <- speedData %>%
       filter(`Exercise Name` == "Max Velocity") %>% 
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`Top Speed (mph)` = round(max(MPH, na.rm = TRUE), 2), .groups = 'drop') %>% 
+      summarize(`Top Speed (mph)` = round(max(`Max Velocity`, na.rm = TRUE), 2), .groups = 'drop') %>% 
       ungroup()
     
     ranked_MaxSpeed <- grouped_MaxSpeed %>% 
@@ -860,7 +955,7 @@ server <- function(input, output) {
       filter(`Exercise Name` == "Acceleration") %>% 
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`10 Yard Acceleration (sec)` = max(Split1, na.rm = TRUE), .groups = 'drop') %>% 
+      summarize(`10 Yard Acceleration (sec)` = round(min(Acceleration, na.rm = TRUE), 2), .groups = 'drop') %>% 
       ungroup()
     
     ranked_SpeedAcc <- grouped_SpeedAcc %>% 
@@ -954,7 +1049,7 @@ server <- function(input, output) {
       filter(`Exercise Name` == "Hard 90") %>% 
       mutate(FakeDate = make_date(Year, match(Month, month.name), 1)) %>%
       group_by(Name, Level, FakeDate, Month, Year, Gender) %>% 
-      summarize(`30 Yard Sprint (sec)` = max(Cumulative2), .groups = 'drop') %>% 
+      summarize(`30 Yard Sprint (sec)` = round(min(`Hard 90`, na.rm = TRUE), 2), .groups = 'drop') %>% 
       ungroup()
     
     ranked_hardNinety <- grouped_hardNinety %>% 
