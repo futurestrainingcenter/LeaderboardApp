@@ -7,17 +7,21 @@ library(gtExtras)
 library(lubridate)
 
 # Load hitting data
-hittingData <- read_csv("HittingFacilityData.csv")
+hitting_data <- read_csv("HittingFacilityData.csv") %>% 
+  filter(!Name %in% c("Jackson Andrade", "Gavin Estrada", "Barrett Ronson"))
+  
 # Load pitching data
-pitchingData <- read_csv("PitchingFacilityData.csv")
+pitching_data <- read_csv("PitchingFacilityData.csv") %>% 
+  filter(!Name %in% c("Donovan Cho", "Rylan Ronquillo", "Aaron Hernandez", "Dustin Soliz"))
+
 # Load Strength Data
-strengthData <- read_csv("StrengthFacilityData.csv")
+strength_data <- read_csv("StrengthFacilityData.csv")
 # Load Speed Data
-speedData <- read_csv("SpeedFacilityData.csv")
+speed_data <- read_csv("SpeedFacilityData.csv")
 
 # Get the most recent month and year from the datasets
-#most_recent_date <- max(strengthData$Date, na.rm = TRUE)
-most_recent_month <- "January" #month.name[month(most_recent_date)]
+#most_recent_date <- max(strength_data$Date, na.rm = TRUE)
+most_recent_month <- "February" #month.name[month(most_recent_date)]
 most_recent_year <- "2025" #year(most_recent_date)
 
 # Define UI for the application
@@ -28,7 +32,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                           sidebarLayout(
                             sidebarPanel(
                               selectInput("month", "Select Month:", choices = month.name, selected = most_recent_month),
-                              selectInput("year", "Select Year:", choices = unique(hittingData$Year), selected = most_recent_year),
+                              selectInput("year", "Select Year:", choices = unique(hitting_data$Year), selected = most_recent_year),
                               selectInput("level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")),                              
                               radioButtons("gender", "Select Gender:", choices = c("Male", "Female"))
                             ),
@@ -47,7 +51,7 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                           sidebarLayout(
                             sidebarPanel(
                               selectInput("pitching_month", "Select Month:", choices = month.name, selected = most_recent_month),
-                              selectInput("pitching_year", "Select Year:", choices = unique(pitchingData$Year), selected = most_recent_year),
+                              selectInput("pitching_year", "Select Year:", choices = unique(pitching_data$Year), selected = most_recent_year),
                               selectInput("pitching_level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")), 
                             ),
                             
@@ -63,9 +67,9 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                           sidebarLayout(
                             sidebarPanel(
                               selectInput("strength_month", "Select Month:", choices = month.name, selected = most_recent_month),
-                              selectInput("strength_year", "Select Year:", choices = unique(strengthData$Year), selected = most_recent_year),
+                              selectInput("strength_year", "Select Year:", choices = unique(strength_data$Year), selected = most_recent_year),
                               selectInput("strength_level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")), 
-                              radioButtons("strenth_gender", "Select Gender:", choices = unique(strengthData$Gender))
+                              radioButtons("strenth_gender", "Select Gender:", choices = unique(strength_data$Gender))
                             ),
                             
                             mainPanel(
@@ -83,15 +87,15 @@ ui <- navbarPage(theme = shinytheme("darkly"),
                           sidebarLayout(
                             sidebarPanel(
                               selectInput("speed_month", "Select Month:", choices = month.name, selected = most_recent_month),
-                              selectInput("speed_year", "Select Year:", choices = unique(speedData$Year), selected = most_recent_year),
+                              selectInput("speed_year", "Select Year:", choices = unique(speed_data$Year), selected = most_recent_year),
                               selectInput("speed_level", "Select Level:", choices = c("L1", "L2", "L3", "Collegiate", "Pro")), 
-                              radioButtons("speed_gender", "Select Gender:", choices = unique(speedData$Gender))
+                              radioButtons("speed_gender", "Select Gender:", choices = unique(speed_data$Gender))
                             ),
                             
                             mainPanel(
                               tabsetPanel(
                                 tabPanel("Top Speed", tableOutput("speedMaxVelTable")),
-                                tabPanel("10 Yard Acceleration", tableOutput("speed10YardAccelTable")),
+                                tabPanel("Acceleration", tableOutput("speed10YardAccelTable")),
                                 tabPanel("30 Yard Sprint", tableOutput("speed30YardSprintTable")),
                               )
                             )
@@ -103,10 +107,18 @@ ui <- navbarPage(theme = shinytheme("darkly"),
 server <- function(input, output) {
   
   output$maxVelTable <- render_gt({
-    ranked_hittingData <- hittingData %>% 
+    summarized_hitting <- hitting_data %>% 
+      filter(!is.na(MaxVel), !is.na(AvgVel), !is.na(MaxDist), !is.na(AvgDist)) %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        MaxVel = round(max(MaxVel, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_hitting_data <- summarized_hitting %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Skill Training Level`) %>%
-      arrange(Date, `Skill Training Level`, desc(MaxVel)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(MaxVel)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -114,8 +126,8 @@ server <- function(input, output) {
       mutate(`Rank Change` = lag(Rank, order_by = Date) - Rank) %>%
       ungroup()
     
-    final_data <- ranked_hittingData %>%
-      filter(Month == input$month, Year == input$year, `Skill Training Level` == input$level, Gender == input$gender) %>%
+    final_data <- ranked_hitting_data %>%
+      filter(Month == input$month, Year == input$year, `Reporting Level (Age-Dependent)` == input$level, Gender == input$gender) %>%
       arrange(desc(MaxVel)) %>%
       select(Rank, Name, MaxVel, `Rank Change`)
     
@@ -193,10 +205,18 @@ server <- function(input, output) {
   
   # Filter and rank by Max Distance
   output$maxDistTable <- render_gt({
-    ranked_hittingData <- hittingData %>% 
+    summarized_hitting <- hitting_data %>% 
+      filter(!is.na(MaxVel), !is.na(AvgVel), !is.na(MaxDist), !is.na(AvgDist)) %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        MaxDist = round(max(MaxDist, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_hitting_data <- summarized_hitting %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Skill Training Level`) %>%
-      arrange(Date, `Skill Training Level`, desc(MaxDist)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(MaxDist)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -204,8 +224,8 @@ server <- function(input, output) {
       mutate(`Rank Change` = lag(Rank, order_by = Date) - Rank) %>%
       ungroup()
     
-    final_data <- ranked_hittingData %>%
-      filter(Month == input$month, Year == input$year, `Skill Training Level` == input$level, Gender == input$gender) %>%
+    final_data <- ranked_hitting_data %>%
+      filter(Month == input$month, Year == input$year, `Reporting Level (Age-Dependent)` == input$level, Gender == input$gender) %>%
       arrange(desc(MaxDist)) %>%
       select(Rank, Name, MaxDist, `Rank Change`)
     
@@ -283,11 +303,18 @@ server <- function(input, output) {
   
   # Filter and rank by Bat Speed
   output$batSpeedTable <- render_gt({
-    ranked_hittingData <- hittingData %>% 
-      filter(!is.na(`Bat Speed`)) %>%
+    summarized_hitting <- hitting_data %>% 
+      filter(!is.na(`Bat Speed`)) %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        `Bat Speed` = round(max(`Bat Speed`, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_hitting_data <- summarized_hitting %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Skill Training Level`) %>%
-      arrange(Date, `Skill Training Level`, desc(`Bat Speed`)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(`Bat Speed`)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -295,8 +322,8 @@ server <- function(input, output) {
       mutate(`Rank Change` = lag(Rank, order_by = Date) - Rank) %>%
       ungroup()
     
-    final_data <- ranked_hittingData %>%
-      filter(Month == input$month, Year == input$year, `Skill Training Level` == input$level, Gender == input$gender) %>%
+    final_data <- ranked_hitting_data %>%
+      filter(Month == input$month, Year == input$year, `Reporting Level (Age-Dependent)` == input$level, Gender == input$gender) %>%
       arrange(desc(`Bat Speed`)) %>%
       select(Rank, Name, `Bat Speed`, `Rank Change`)
     
@@ -374,11 +401,18 @@ server <- function(input, output) {
   
   # Filter and rank by Pitching Speed
   output$pitchingMaxVelTable <- render_gt({
-    ranked_pitchingData <- pitchingData %>% 
+    summarized_pitching <- pitching_data %>% 
       filter(!is.na(Max_RelSpeed), TaggedPitchType == "Fastball") %>%
+      group_by(Name, `Reporting Level (Age-Dependent)`, Month, Year) %>% 
+      summarise(
+        Max_RelSpeed = round(max(Max_RelSpeed, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_pitching_data <- summarized_pitching %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Skill Training Level`) %>%
-      arrange(Date, `Skill Training Level`, desc(Max_RelSpeed)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(Max_RelSpeed)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -386,8 +420,8 @@ server <- function(input, output) {
       mutate(`Rank Change` = lag(Rank, order_by = Date) - Rank) %>%
       ungroup()
     
-    final_data <- ranked_pitchingData %>%
-      filter(Month == input$pitching_month, Year == input$pitching_year, `Skill Training Level` == input$pitching_level) %>%
+    final_data <- ranked_pitching_data %>%
+      filter(Month == input$pitching_month, Year == input$pitching_year, `Reporting Level (Age-Dependent)` == input$pitching_level) %>%
       arrange(desc(Max_RelSpeed)) %>% 
       select(Rank, Name, Max_RelSpeed, `Rank Change`)
     
@@ -466,11 +500,18 @@ server <- function(input, output) {
   
   # Filter and rank by ISO Belt Squat
   output$strengthIsoBeltSquatTable <- render_gt({
-    ranked_ISOSQT <- strengthData %>% 
+    summarized_strength <- strength_data %>% 
       filter(`Exercise Name` == "IBSQT") %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        Result = round(max(Result, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_ISOSQT <- summarized_strength %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Sp Training Level`) %>%
-      arrange(Date, `Sp Training Level`, desc(Result)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(Result)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -479,7 +520,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_ISOSQT %>%
-      filter(Month == input$strength_month, Year == input$strength_year, `Sp Training Level` == input$strength_level, Gender == input$strenth_gender) %>%
+      filter(Month == input$strength_month, Year == input$strength_year, `Reporting Level (Age-Dependent)` == input$strength_level, Gender == input$strenth_gender) %>%
       arrange(desc(Result)) %>% 
       select(Rank, Name, Result, `Rank Change`)
     
@@ -557,11 +598,18 @@ server <- function(input, output) {
   
   # Filter and rank by Countermovement Jump
   output$CMJ_Table <- render_gt({
-    ranked_CMJ <- strengthData %>% 
+    summarized_strength <- strength_data %>% 
       filter(`Exercise Name` == "CMJ") %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        Result = round(max(Result, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_CMJ <- summarized_strength %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Sp Training Level`) %>%
-      arrange(Date, `Sp Training Level`, desc(Result)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(Result)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -570,7 +618,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_CMJ %>%
-      filter(Month == input$strength_month, Year == input$strength_year, `Sp Training Level` == input$strength_level, Gender == input$strenth_gender) %>%
+      filter(Month == input$strength_month, Year == input$strength_year, `Reporting Level (Age-Dependent)` == input$strength_level, Gender == input$strenth_gender) %>%
       arrange(desc(Result)) %>% 
       select(Rank, Name, Result, `Rank Change`)
     
@@ -648,11 +696,18 @@ server <- function(input, output) {
   
   # Filter and rank by Shoulder ISO-Y
   output$SHLDISOY_Table <- render_gt({
-    ranked_SHLDISOY <- strengthData %>% 
+    summarized_strength <- strength_data %>% 
       filter(`Exercise Name` == "SHLDISOY") %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        Result = round(max(Result, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_SHLDISOY <- summarized_strength %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Sp Training Level`) %>%
-      arrange(Date, `Sp Training Level`, desc(Result)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(Result)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -661,7 +716,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_SHLDISOY %>%
-      filter(Month == input$strength_month, Year == input$strength_year, `Sp Training Level` == input$strength_level, Gender == input$strenth_gender) %>%
+      filter(Month == input$strength_month, Year == input$strength_year, `Reporting Level (Age-Dependent)` == input$strength_level, Gender == input$strenth_gender) %>%
       arrange(desc(Result)) %>% 
       select(Rank, Name, Result, `Rank Change`)
     
@@ -739,7 +794,7 @@ server <- function(input, output) {
   
   # Filter and rank by Proteus Power
   # output$strengthProteusPowerTable <- render_gt({
-  #   grouped_ProteusPower <- strengthData %>%
+  #   grouped_ProteusPower <- strength_data %>%
   #     filter(`Exercise Name` == "Proteus Full Test") %>% 
   #     mutate(Date = make_date(Year, match(Month, month.name), 1)) %>%
   #     group_by(Name, Level, Date, Month, Year, Gender) %>% 
@@ -833,10 +888,17 @@ server <- function(input, output) {
   
   # Filter and rank by Max Running Speed
   output$speedMaxVelTable <- render_gt({
-    ranked_MaxSpeed <- speedData %>% 
+    summarized_speed <- speed_data %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        max_velocity = round(max(max_velocity, na.rm = TRUE), 1),
+        .groups = "drop"
+      )
+    
+    ranked_MaxSpeed <- summarized_speed %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Sp Training Level`) %>%
-      arrange(Date, `Sp Training Level`, desc(max_velocity)) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, desc(max_velocity)) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -845,7 +907,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_MaxSpeed %>%
-      filter(Month == input$speed_month, Year == input$speed_year, `Sp Training Level` == input$speed_level, Gender == input$speed_gender) %>%
+      filter(Month == input$speed_month, Year == input$speed_year, `Reporting Level (Age-Dependent)` == input$speed_level, Gender == input$speed_gender) %>%
       arrange(desc(max_velocity)) %>% 
       select(Rank, Name, max_velocity, `Rank Change`)
     
@@ -923,10 +985,17 @@ server <- function(input, output) {
   
   # Filter and rank by 10 Yard Acceleration
   output$speed10YardAccelTable <- render_gt({
-    ranked_SpeedAcc <- speedData %>% 
+    summarized_speed <- speed_data %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        early_acceleration = round(min(early_acceleration, na.rm = TRUE), 3),
+        .groups = "drop"
+      )
+    
+    ranked_SpeedAcc <- summarized_speed %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Sp Training Level`) %>%
-      arrange(Date, `Sp Training Level`, early_acceleration) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, early_acceleration) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -935,7 +1004,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_SpeedAcc %>%
-      filter(Month == input$speed_month, Year == input$speed_year, `Sp Training Level` == input$speed_level, Gender == input$speed_gender) %>%
+      filter(Month == input$speed_month, Year == input$speed_year, `Reporting Level (Age-Dependent)` == input$speed_level, Gender == input$speed_gender) %>%
       arrange(early_acceleration) %>% 
       select(Rank, Name, early_acceleration, `Rank Change`)
     
@@ -1013,10 +1082,17 @@ server <- function(input, output) {
   
   # Filter and rank by 30 Yard Sprint
   output$speed30YardSprintTable <- render_gt({
-    ranked_hardNinety <- speedData %>% 
+    summarized_speed <- speed_data %>% 
+      group_by(Name, `Reporting Level (Age-Dependent)`, Gender, Month, Year) %>% 
+      summarise(
+        thirty_yard = round(min(thirty_yard, na.rm = TRUE), 3),
+        .groups = "drop"
+      )
+    
+    ranked_hardNinety <- summarized_speed %>% 
       mutate(Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%B-%d")) %>%
-      group_by(Date, `Sp Training Level`) %>%
-      arrange(Date, `Sp Training Level`, thirty_yard) %>%
+      group_by(Date, `Reporting Level (Age-Dependent)`) %>%
+      arrange(Date, `Reporting Level (Age-Dependent)`, thirty_yard) %>%
       mutate(Rank = row_number()) %>%
       ungroup() %>%
       arrange(Name, Date) %>%
@@ -1025,7 +1101,7 @@ server <- function(input, output) {
       ungroup()
     
     final_data <- ranked_hardNinety %>%
-      filter(Month == input$speed_month, Year == input$speed_year, `Sp Training Level` == input$speed_level, Gender == input$speed_gender) %>%
+      filter(Month == input$speed_month, Year == input$speed_year, `Reporting Level (Age-Dependent)` == input$speed_level, Gender == input$speed_gender) %>%
       arrange(thirty_yard) %>% 
       select(Rank, Name, thirty_yard, `Rank Change`)
     
