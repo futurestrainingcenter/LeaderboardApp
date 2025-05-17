@@ -308,10 +308,10 @@ server <- function(input, output) {
   # Filter and rank by Bat Speed
   output$batSpeedTable <- render_gt({
     summarized_hitting <- hitting_data %>% 
-      filter(!is.na(`Bat Speed`)) %>% 
+      filter(!is.na(bat_speed)) %>% 
       group_by(Name, Level, Gender, Month, Year) %>% 
       summarise(
-        `Bat Speed` = round(max(`Bat Speed`, na.rm = TRUE), 1),
+        `Bat Speed` = round(max(bat_speed, na.rm = TRUE), 1),
         .groups = "drop"
       )
     
