@@ -9,23 +9,23 @@ library(lubridate)
 
 # Load hitting data
 hitting_data <- read_excel("HittingFacilityData.xlsx") %>% 
-  filter(Date < as.Date("2025-05-01"))
+  filter(Date < as.Date("2025-06-01"))
   
 # Load pitching data
 pitching_data <- read_excel("PitchingFacilityData.xlsx") %>% 
-  filter(Date < as.Date("2025-05-01"))
+  filter(Date < as.Date("2025-06-01"))
 
 # Load Strength Data
 strength_data <- read_excel("StrengthFacilityData.xlsx") %>% 
-  filter(Date < as.Date("2025-05-01"))
+  filter(Date < as.Date("2025-06-01"))
 
 # Load Speed Data
 speed_data <- read_excel("SpeedFacilityData.xlsx") %>% 
-  filter(Date < as.Date("2025-05-01"))
+  filter(Date < as.Date("2025-06-01"))
 
 # Get the most recent month and year from the datasets
 #most_recent_date <- max(strength_data$Date, na.rm = TRUE)
-most_recent_month <- "April" #month.name[month(most_recent_date)]
+most_recent_month <- "May" #month.name[month(most_recent_date)]
 most_recent_year <- "2025" #year(most_recent_date)
 
 # Define UI for the application
